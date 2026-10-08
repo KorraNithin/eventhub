@@ -1,0 +1,52 @@
+/* Fixed full-screen dark background — sits behind everything */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.app-bg__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.app-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  animation: appOrbFloat 9s ease-in-out infinite;
+}
+.app-bg__orb--1 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, #6366f1, #8b5cf6);
+  top: -140px;
+  left: -140px;
+  animation-delay: 0s;
+}
+.app-bg__orb--2 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, #06b6d4, #3b82f6);
+  bottom: -100px;
+  right: -100px;
+  animation-delay: -3.5s;
+}
+.app-bg__orb--3 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, #ec4899, #f43f5e);
+  top: 45%;
+  left: 55%;
+  animation-delay: -6s;
+}
+
+@keyframes appOrbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(20px, -25px) scale(1.06); }
+  66%       { transform: translate(-16px, 18px) scale(0.96); }
+}
