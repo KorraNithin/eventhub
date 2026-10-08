@@ -110,3 +110,20 @@ I used Kiro for: (1) User model and auth controller, (2) JWT protect/authorize m
 - Token stored in localStorage (XSS tradeoff; httpOnly cookies would need CSRF handling)
 - Booking doesn't store the price paid, so totals use the current event price
 - Admin event edits are read-then-write; fine for low traffic
+
+
+
+## Screenshots
+
+| Home | Event details |
+|---|---|
+| ![Home](docs/screenshots/home.png) | 
+
+| My bookings | 
+|---|---|
+| ![My bookings](docs/screenshots/my-bookings.png) |
+
+Admin: manage events |
+
+ ![Admin events](docs/screenshots/admin-events.png) |
+
