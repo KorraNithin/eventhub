@@ -1,8 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 /**
  * protect
  * Verifies the Bearer token from the Authorization header,
@@ -25,7 +23,7 @@ exports.protect = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       const message =
         err.name === "TokenExpiredError"
@@ -52,14 +50,14 @@ exports.protect = async (req, res, next) => {
  * Factory that returns middleware restricting access to the given roles.
  * Must be used AFTER protect (req.user must already be set).
  *
- * Responds with 403 if req.user.role is not in the allowed list.
+ * Responds with 403 if req.user is missing or its role is not allowed.
  *
  * Usage:
- *   router.delete("/users/:id", protect, authorize("admin"), deleteUser);
+ *   router.delete("/events/:id", protect, authorize("admin"), deleteEvent);
  */
 exports.authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res
         .status(403)
         .json({ message: `Forbidden. Requires role: ${roles.join(" or ")}.` });
