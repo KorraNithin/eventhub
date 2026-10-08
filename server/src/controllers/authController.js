@@ -95,3 +95,15 @@ exports.login = async (req, res, next) => {
     next(err);
   }
 };
+
+
+/**
+ * GET /api/auth/me
+ * Returns the currently authenticated user (no password).
+ */
+exports.getMe = (req, res) => {
+  const { _id, name, email, role, createdAt, updatedAt } = req.user;
+  res.status(200).json({
+    user: { id: _id, name, email, role, createdAt, updatedAt },
+  });
+};
