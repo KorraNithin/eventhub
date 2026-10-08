@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
@@ -18,6 +19,9 @@ app.use("/api/auth", authRoutes);
 
 // Event routes
 app.use("/api/events", eventRoutes);
+
+// Booking routes
+app.use("/api/bookings", bookingRoutes);
 
 app.use(errorHandler);
 
