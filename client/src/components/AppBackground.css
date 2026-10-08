@@ -2,7 +2,7 @@
 .app-bg {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;          /* behind all content in #root's stacking context */
   background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
   pointer-events: none;
   overflow: hidden;

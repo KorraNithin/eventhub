@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Event = require("../models/Event");
+const Booking = require("../models/Booking");
 
 // Whitelisted fields for create / update
 const ALLOWED_FIELDS = ["title", "description", "venue", "date", "price", "totalSeats"];
@@ -163,17 +164,28 @@ exports.updateEvent = async (req, res, next) => {
       return res.status(400).json({ message: "No updatable fields provided" });
     }
 
+    // Validate all provided fields (partial — requireAll=false).
+    // validateEventFields already checks date validity, price >= 0, totalSeats >= 1.
     const errors = validateEventFields(fields, false);
     if (errors.length) return res.status(400).json({ errors });
 
-    // If totalSeats is being updated, adjust availableSeats proportionally
     const update = { ...fields };
+
     if (fields.totalSeats !== undefined) {
       const event = await Event.findById(req.params.id);
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const diff = Number(fields.totalSeats) - event.totalSeats;
-      update.availableSeats = Math.max(0, event.availableSeats + diff);
+      const newTotal = Number(fields.totalSeats);
+      // booked = seats already sold (never negative due to how we handle cancellations)
+      const booked = event.totalSeats - event.availableSeats;
+
+      if (newTotal < booked) {
+        return res.status(400).json({
+          message: `Total seats cannot be less than already booked seats (${booked})`,
+        });
+      }
+
+      update.availableSeats = newTotal - booked;
     }
 
     const updated = await Event.findByIdAndUpdate(
@@ -195,6 +207,17 @@ exports.deleteEvent = async (req, res, next) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid event ID" });
+    }
+
+    // Refuse deletion when confirmed bookings exist
+    const activeBookings = await Booking.countDocuments({
+      event: req.params.id,
+      status: "confirmed",
+    });
+    if (activeBookings > 0) {
+      return res.status(409).json({
+        message: "Cannot delete an event with active bookings. Cancel them first.",
+      });
     }
 
     const event = await Event.findByIdAndDelete(req.params.id);
