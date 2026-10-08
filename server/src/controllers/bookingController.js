@@ -97,30 +97,29 @@ exports.cancelBooking = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
 
-    const booking = await Booking.findById(req.params.id);
+    // Atomically flip confirmed -> cancelled. Only one concurrent request can match.
+    const booking = await Booking.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, status: "confirmed" },
+      { status: "cancelled" },
+      { new: true }
+    );
+
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    // Only the owner can cancel
-    if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorised to cancel this booking" });
-    }
-
-    // Only confirmed bookings can be cancelled
-    if (booking.status !== "confirmed") {
+      // Not found, not yours, or already cancelled
+      const existing = await Booking.findOne({ _id: req.params.id, user: req.user._id }).select("status");
+      if (!existing) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
       return res.status(400).json({ message: "Booking is already cancelled" });
     }
 
-    // Mark cancelled and restore seats atomically
-    // Both writes must succeed; if restoring seats fails the booking status
-    // stays confirmed (safer than leaking seats).
-    await Event.findByIdAndUpdate(booking.event, {
-      $inc: { availableSeats: booking.seats },
-    });
-
-    booking.status = "cancelled";
-    await booking.save();
+    // Restore seats exactly once. If this fails, undo the status change.
+    try {
+      await Event.updateOne({ _id: booking.event }, { $inc: { availableSeats: booking.seats } });
+    } catch (restoreErr) {
+      await Booking.updateOne({ _id: booking._id }, { status: "confirmed" });
+      throw restoreErr;
+    }
 
     res.json({ message: "Booking cancelled successfully", booking });
   } catch (err) {
